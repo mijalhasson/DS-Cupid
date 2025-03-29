@@ -1,17 +1,8 @@
 # Load SpaCy NLP model
-import spacy
 from rapidfuzz import process, fuzz
 import re
 from api.schemas.schema import RoomData
 import pandas as pd
-
-nlp = spacy.load("en_core_web_sm")
-
-# Use nlp.pipe() to process multiple room names at once
-def preprocess_batch(texts):
-    """Efficiently process a batch of text using nlp.pipe()."""
-    return [" ".join([token.lemma_ for token in doc if not token.is_stop and not token.is_punct])
-            for doc in nlp.pipe(texts, batch_size=1000, n_process=8)]  # Adjust batch_size & n_process
 
 def get_matched_rooms(df1: pd.DataFrame, df2: pd.DataFrame, output_columns: list[str]=[], room_col: str="processed_room_name", similarity_threshold: int=80):
     """
@@ -56,6 +47,8 @@ def get_unmatched_rooms(df: pd.DataFrame, df_matched: pd.DataFrame, room_col: st
 
 
 def map_rooms(df1: pd.DataFrame, df2: pd.DataFrame, room_col: str="processed_room_name", similarity_threshold: int=80):
+    print(df1)
+    print(df2)
     df_matched = get_matched_rooms(df1, df2, ['supplier_name', 'supplier_room_id', 'supplier_room_name'])
     df1_unmatched = get_unmatched_rooms(df1, df_matched, 'reference_room_id')
     df2_unmatched = get_unmatched_rooms(df2, df_matched, 'supplier_room_id')
@@ -75,6 +68,7 @@ def reference_room_match(lp_id: str, df1: pd.DataFrame, df2: pd.DataFrame, room_
     df_unmatched = get_unmatched_rooms(df2, df_matched, 'supplier_room_id')
 
     return df_matched, df_unmatched
+
 
 def match_hotel_rooms(rooms_data: RoomData):
     id_reference = rooms_data.referenceCatalog.propertyId
@@ -133,7 +127,7 @@ def match_hotel_rooms(rooms_data: RoomData):
 
 def normalize_room_name(room_names: list[str]):
     def process(text):
-        return re.sub(r'[^\w\s]', '', text).lower()
+        return re.sub(r'[^\w\s]', '', text).lower().strip()
 
     processed_room_name_list = []
     for room in room_names:
