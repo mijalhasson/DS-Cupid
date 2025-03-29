@@ -6,9 +6,20 @@ from api.core.service import reference_room_match, normalize_room_name, match_ho
 
 df_reference = pd.read_csv("data/processed/reference_rooms.csv")
 
-app = FastAPI()
+app = FastAPI(swagger_ui_parameters={"syntaxHighlight": False})
 
-@app.post("/ref_room_match")
+@app.post("/ref_room_match", summary="Reference Room Match", description="""
+    Matches supplier room names to reference room names based on a given property ID.
+    
+    **Request Body:**
+    - `referenceCatalog.propertyId` (str): The property ID to match rooms against.
+    - `inputCatalog` (list): A list of supplier rooms with their details.
+    
+    **Response:**
+    - `referenceCatalog` (str): The input property ID.
+    - `mappedRooms` (list): Successfully matched rooms with reference details.
+    - `unmappedRooms` (list): Rooms that couldn't be matched.
+""")
 async def ref_room_match(request_body: RoomData):
     try:
         id_reference = request_body.referenceCatalog.propertyId
@@ -73,7 +84,16 @@ async def ref_room_match(request_body: RoomData):
             )
 
 # Room Match
-@app.post("/room_match")
+@app.post("/room_match", summary="Room Match", description="""
+    Matches a list of supplier rooms against reference room names.
+    
+    **Request Body:**
+    - `referenceCatalog` (object): Property reference details.
+    - `inputCatalog` (list): List of supplier rooms with details.
+    
+    **Response:**
+    - A dictionary containing matched and unmatched rooms.
+""")
 async def room_match(request_body: RoomData):
     try:
         return match_hotel_rooms(request_body)
@@ -88,7 +108,15 @@ async def room_match(request_body: RoomData):
             )
 
 # Bulk Room Match
-@app.post("/bulk_room_match")
+@app.post("/bulk_room_match", summary="Bulk Room Match", description="""
+    Processes multiple room match requests in a batch.
+    
+    **Request Body:**
+    - `bulk_matches` (list): A list of RoomData objects.
+    
+    **Response:**
+    - A list of room match results corresponding to each request in `bulk_matches`.
+""")
 async def bulk_room_match(request_body: BulkRoomMatchRequest):
     try:
         room_mapping = []
