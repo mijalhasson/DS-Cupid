@@ -176,3 +176,7 @@ cython_debug/
 # Ignore content inside data folder
 data/*
 !data/
+data/processed/*
+!data/processed/
+!data/processed/.gitkeep
+
