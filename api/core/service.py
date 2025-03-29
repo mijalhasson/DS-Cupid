@@ -3,6 +3,17 @@ from rapidfuzz import process, fuzz
 import re
 from api.schemas.schema import RoomData
 import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
+
+# Download required resources
+nltk.download('stopwords')
+nltk.download('wordnet')
+
+# Initialize stopwords and lemmatizer
+stop_words = set(stopwords.words('english'))
+lemmatizer = WordNetLemmatizer()
 
 def get_matched_rooms(df1: pd.DataFrame, df2: pd.DataFrame, output_columns: list[str]=[], room_col: str="processed_room_name", similarity_threshold: int=80):
     """
@@ -47,8 +58,6 @@ def get_unmatched_rooms(df: pd.DataFrame, df_matched: pd.DataFrame, room_col: st
 
 
 def map_rooms(df1: pd.DataFrame, df2: pd.DataFrame, room_col: str="processed_room_name", similarity_threshold: int=80):
-    print(df1)
-    print(df2)
     df_matched = get_matched_rooms(df1, df2, ['supplier_name', 'supplier_room_id', 'supplier_room_name'])
     df1_unmatched = get_unmatched_rooms(df1, df_matched, 'reference_room_id')
     df2_unmatched = get_unmatched_rooms(df2, df_matched, 'supplier_room_id')
@@ -71,6 +80,7 @@ def reference_room_match(lp_id: str, df1: pd.DataFrame, df2: pd.DataFrame, room_
 
 
 def match_hotel_rooms(rooms_data: RoomData):
+    print(rooms_data)
     id_reference = rooms_data.referenceCatalog.propertyId
 
     reference_rooms = []
@@ -126,12 +136,36 @@ def match_hotel_rooms(rooms_data: RoomData):
         }
 
 def normalize_room_name(room_names: list[str]):
-    def process(text):
-        return re.sub(r'[^\w\s]', '', text).lower().strip()
+    def preprocess_text(text):
+        """Efficiently preprocess text: lowercase, remove numbers/punctuation/stopwords, and lemmatize."""
+        if isinstance(text, list):  # If input is a list, process each item
+            return [preprocess_text(t) for t in text]
+        
+        # Convert to lowercase
+        text = text.lower()
+        
+        # Remove numbers
+        text = re.sub(r'\d+', '', text)
+        
+        # Remove punctuation (excluding words and spaces)
+        text = re.sub(r'[^\w\s]', '', text)
+        
+        # Remove extra whitespaces
+        text = text.strip()
+        
+        # Tokenize (split into words)
+        words = text.split()
+        
+        # Remove stopwords and apply lemmatization
+        words = [lemmatizer.lemmatize(word) for word in words if word not in stop_words]
+        
+        # Rejoin words into a single string
+        return " ".join(words)
 
     processed_room_name_list = []
     for room in room_names:
-        processed_room = process(room)
+        processed_room = preprocess_text(room)
         processed_room_name_list.append(processed_room)
     
     return processed_room_name_list
+
