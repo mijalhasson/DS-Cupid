@@ -5,7 +5,7 @@ DS Cupid - Technical Assesment for Niutee
 
 ### 1. Create a New Conda Environment
 ```sh
-conda create --name myenv python=3.8
+conda create --name myenv python=3.11
 conda activate myenv
 ```
 
@@ -24,7 +24,11 @@ Execute the Jupyter notebook `04_simpler_normalization_methods.ipynb` to process
 
 ### 5. Run the API
 ```sh
-uvicorn myapp:app --reload
+uvicorn api.main:app
+```
+#### 5.1 Run the API in dev mode
+```sh
+uvicorn api.main:app --reload
 ```
 
 ### 6. Access API Documentation (Swagger UI)
